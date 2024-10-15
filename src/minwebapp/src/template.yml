@@ -1,0 +1,48 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: aws-sam-typescript
+
+Globals:
+  Function:
+    Timeout: 3
+    MemorySize: 128
+  Api:
+    OpenApiVersion: 3.0.3
+
+Resources:
+  LambdaServiceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Action: sts:AssumeRole
+            Effect: Allow
+            Principal:
+              Service: lambda.amazonaws.com
+        Version: '2012-10-17'
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
+  LambdaFunction:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: back/
+      Role: !GetAtt LambdaServiceRole.Arn
+      Handler: index.lambdaHandler
+      Runtime: nodejs18.x
+      Architectures:
+        - arm64
+      Events:
+        HelloApi:
+          Type: Api 
+          Properties:
+            Path: /hello
+            Method: get
+    Metadata:
+      BuildMethod: esbuild
+      BuildProperties:
+        Minify: true
+        Target: "es2020"
+        EntryPoints:
+          - index.ts
+    DependsOn:
+      - LambdaServiceRole
